@@ -1,3 +1,11 @@
+'''
+ # @ Author: starrysky
+ # @ Create Time: 2022-12-05 15:52:10
+ # @ Modified by: starrysky
+ # @ Modified time: 2022-12-05 16:01:22
+ # @ Description: 清除文件夹下所有图片的exif信息,如果未成功,导出文件路径.
+ '''
+
 from PIL import Image
 import os,time
 import sys
