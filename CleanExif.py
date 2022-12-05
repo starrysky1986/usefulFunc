@@ -1,20 +1,27 @@
 '''
  # @ Author: starrysky
- # @ Create Time: 2022-12-05 15:52:10
+ # @ Create Time: 2022-06-25 14:26:10
  # @ Modified by: starrysky
- # @ Modified time: 2022-12-05 16:01:22
- # @ Description: 清除文件夹下所有图片的exif信息,如果未成功,导出文件路径.
+ # @ Modified time: 2022-12-05 16:29:05
+ # @ Description: 多线程批量删除图片exif信息
  '''
+
 
 from PIL import Image
 import os,time
 import sys
 import threading
-#countNums = 1
-#photoDir = 'D:/W300218/202006'
-#outDir = 'D:/W300218/202006a'
+
+# 如果需要统计数据，打开countNums
+# countNums = 1 
+
+# 图片路径
 photoDir = 'E:/image/original'
+# 清理后的图片保存路径
 outDir = 'E:/image/cleaned'
+
+# 多线程，最大线程数
+THREADING_LIMIT = 30
  
 def clearExifInfo(photoAddress, outPhotoAddress,semaphore): #, currentNum
     semaphore.acquire()
@@ -23,12 +30,10 @@ def clearExifInfo(photoAddress, outPhotoAddress,semaphore): #, currentNum
     except:
         print("FileError:{0}".format(photoAddress))
         semaphore.release()
-        return
-    #data = list(image.getdata())
-    
+        return  
+
     try: 
-        data = list(image.getdata())
-    
+        data = list(image.getdata())    
     except:
         print("FileError:{0}".format(photoAddress))
         semaphore.release()
@@ -47,6 +52,7 @@ def clearExifInfo(photoAddress, outPhotoAddress,semaphore): #, currentNum
     return
 
 '''
+# 清理png格式的图片
 def clearExifInfoPNG(photoAddress, outPhotoAddress, currentNum,semaphore):
     semaphore.acquire()
     image = Image.open(photoAddress)
@@ -60,9 +66,10 @@ def clearExifInfoPNG(photoAddress, outPhotoAddress, currentNum,semaphore):
     return
 '''
 
+# 多线程处理图片
 def clearExif(path):
     startTime = time.time()       
-    semaphore = threading.BoundedSemaphore(30)
+    semaphore = threading.BoundedSemaphore(THREADING_LIMIT)  
     for root, dirs, files in os.walk(path):
         outRoot = root.replace(path, outDir)
         if not os.path.exists(outRoot):
@@ -71,16 +78,20 @@ def clearExif(path):
             if name.endswith(".JPG") or name.endswith(".jpg") or name.endswith(".png") or name.endswith(".PNG"):
                 photoAddress = os.path.join(root,name)
                 outPhotoAddress= os.path.join(outRoot,name)
-                #如果文件已经存在，则不再重复处理
+                # 为防止意外中断，重复处理文件：如果文件已经存在，则不再重复处理。
                 if os.path.exists(outPhotoAddress):
                     #print("{0} is exists".format(outPhotoAddress))
                     continue
-                #global countNums
-                #currentNum = countNums
-                #print("Start:{0}  --{1}\n".format(currentNum, photoAddress))                
-                #countNums = countNums + 1
+                '''
+                # 如果需要统计数据，打开这里
+                global countNums
+                currentNum = countNums
+                print("Start:{0}  --{1}\n".format(currentNum, photoAddress))                
+                countNums = countNums + 1
+                '''
                 t=threading.Thread(target=clearExifInfo,args=(photoAddress,outPhotoAddress,semaphore)) #,currentNum
                 t.start()
+
             '''
             elif name.endswith(".PNG") or name.endswith(".png"):
                 photoAddress = os.path.join(root,name)
@@ -96,10 +107,11 @@ def clearExif(path):
  
  
  
-# cmd: python CleanExif.py E:\SB_PHOTO
+
 if __name__ == '__main__':
+# 如果使用命令行：
+# cmd: python CleanExif.py photoDir
 #    photoDir = sys.argv[1]
-#     photoDir = '/home/W300218'
     
     clearExif(photoDir)
     print("End")
